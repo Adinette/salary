@@ -3,14 +3,19 @@ import { ref } from 'vue'
 
 // --- TYPE DEFINITIONS ---
 
+// This interface now includes each specific deduction for historical accuracy.
 export interface SalaryCalculation {
   calculationDate: string;
+  operatorName?: string; // Optional: To store the name at the time of calculation
   chiffreAffaireMensuel: number;
   chiffreAffaireFinal: number;
   chiffreAffaireHorsTaxe: number;
   fel: number;
   aib: number;
-  autresPrelevements: number;
+  dette: number;
+  penalite: number;
+  remboursement: number;
+  ecart: number;
   totalPrelevements: number;
   salaireBrut: number;
 }
@@ -73,6 +78,8 @@ export const useOperatorsStore = defineStore('operators', () => {
   function addSalaryRecord(operatorId: number, record: SalaryCalculation) {
     const operator = operators.value.find(o => o.id === operatorId);
     if (operator) {
+      // Add operator name to the record for historical context
+      record.operatorName = `${operator.prenom} ${operator.nom}`;
       operator.salaryHistory.unshift(record); // Add to the beginning of the array
       if (operator.salaryHistory.length > 3) {
         operator.salaryHistory.pop(); // Keep only the last 3 records

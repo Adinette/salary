@@ -12,6 +12,12 @@
         :items="operators"
         item-value="id"
         class="elevation-1"
+        :items-per-page-options="[
+          { value: 10, title: '10' },
+          { value: 25, title: '25' },
+          { value: 50, title: '50' },
+          { value: -1, title: 'Tout' }
+        ]"
       >
         <template v-slot:item.actions="{ item }">
           <v-tooltip location="top" text="Détails & Historique">
@@ -74,14 +80,29 @@
     </v-dialog>
 
     <!-- Salary Form Dialog -->
-    <v-dialog v-model="salaryFormDialog" max-width="600px" persistent>
+    <v-dialog v-model="salaryFormDialog" max-width="700px" persistent>
       <v-card>
         <v-card-title><span class="text-h5">Calculer le salaire pour {{ currentOperator?.prenom }} {{ currentOperator?.nom }}</span></v-card-title>
         <v-card-text>
           <v-container>
             <v-row>
-              <v-col cols="12"><v-text-field v-model.number="salaryInput.chiffreAffaireMensuel" label="Chiffre d'Affaire Mensuel" type="number" prefix="€" required></v-text-field></v-col>
-              <v-col cols="12"><v-text-field v-model.number="salaryInput.autresPrelevements" label="Autres Prélèvements (Pénalités, etc.)" type="number" prefix="€"></v-text-field></v-col>
+              <v-col cols="12" md="6">
+                <v-text-field v-model.number="salaryInput.chiffreAffaireMensuel" label="Chiffre d'Affaire Mensuel" type="number" prefix="€" required></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field label="FEL" :model-value="2500" readonly type="number" prefix="€"></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6">
+                 <v-text-field label="AIB (calculé)" :model-value="calculatedAIB.toFixed(2)" readonly type="number" prefix="€"></v-text-field>
+              </v-col>
+            </v-row>
+            <v-divider class="my-4"></v-divider>
+            <p class="text-subtitle-1 mb-2">Autres Prélèvements (Optionnel)</p>
+            <v-row>
+              <v-col cols="12" md="6"><v-text-field v-model.number="salaryInput.dette" label="Dette" type="number" prefix="€" clearable></v-text-field></v-col>
+              <v-col cols="12" md="6"><v-text-field v-model.number="salaryInput.penalite" label="Pénalité" type="number" prefix="€" clearable></v-text-field></v-col>
+              <v-col cols="12" md="6"><v-text-field v-model.number="salaryInput.remboursement" label="Remboursement" type="number" prefix="€" clearable></v-text-field></v-col>
+              <v-col cols="12" md="6"><v-text-field v-model.number="salaryInput.ecart" label="Écart" type="number" prefix="€" clearable></v-text-field></v-col>
             </v-row>
           </v-container>
         </v-card-text>
@@ -113,7 +134,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useOperatorsStore, type Operator, type SalaryCalculation } from '@/stores/operators';
-import { useSalaryCalculator } from '@/composables/useSalaryCalculator';
+import { useSalaryCalculator, type SalaryInput } from '@/composables/useSalaryCalculator';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 
@@ -192,11 +213,25 @@ function deleteItemConfirm() {
 const salaryFormDialog = ref(false);
 const salaryConfirmDialog = ref(false);
 const currentOperator = ref<Operator | null>(null);
-const salaryInput = ref({ chiffreAffaireMensuel: 0, autresPrelevements: 0 });
+const defaultSalaryInput: SalaryInput = {
+  chiffreAffaireMensuel: 0,
+  dette: undefined,
+  penalite: undefined,
+  remboursement: undefined,
+  ecart: undefined,
+};
+const salaryInput = ref<SalaryInput>({ ...defaultSalaryInput });
+
+const calculatedAIB = computed(() => {
+  const ca = salaryInput.value.chiffreAffaireMensuel || 0;
+  const chiffreAffaireFinal = ca / 1.10;
+  const chiffreAffaireHorsTaxe = chiffreAffaireFinal * 0.06;
+  return chiffreAffaireHorsTaxe * 0.05;
+});
 
 function openSalaryForm(item: Operator) {
   currentOperator.value = item;
-  salaryInput.value = { chiffreAffaireMensuel: 0, autresPrelevements: 0 };
+  salaryInput.value = { ...defaultSalaryInput }; // Reset form
   salaryFormDialog.value = true;
 }
 
@@ -206,13 +241,11 @@ function closeSalaryFormDialog() {
 }
 
 function confirmAndCalculate() {
-  // Simple validation
-  if (salaryInput.value.chiffreAffaireMensuel > 0) {
-    salaryConfirmDialog.value = true;
-  } else {
-    // In a real app, show a proper error message
+  if ((salaryInput.value.chiffreAffaireMensuel || 0) <= 0) {
     alert("Le Chiffre d'Affaire Mensuel doit être supérieur à 0.");
+    return;
   }
+  salaryConfirmDialog.value = true;
 }
 
 function executeCalculation() {
@@ -222,6 +255,7 @@ function executeCalculation() {
 
   const finalRecord: SalaryCalculation = {
     ...calculationResult,
+    operatorName: `${currentOperator.value.prenom} ${currentOperator.value.nom}`,
     calculationDate: new Date().toISOString(),
   };
 
@@ -230,16 +264,13 @@ function executeCalculation() {
   salaryConfirmDialog.value = false;
   closeSalaryFormDialog();
 
-  // Redirect to details page
   viewItemDetails(currentOperator.value);
 }
-
 
 // --- NAVIGATION ---
 function viewItemDetails(item: Operator) {
   router.push({ name: 'operateur-details', params: { id: item.id } });
 }
-
 </script>
 
 <style scoped>

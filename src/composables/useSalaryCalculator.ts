@@ -1,24 +1,32 @@
 import type { SalaryCalculation } from '@/stores/operators';
 
-interface SalaryInput {
+export interface SalaryInput {
   chiffreAffaireMensuel: number;
-  autresPrelevements: number;
+  dette?: number;
+  penalite?: number;
+  remboursement?: number;
+  ecart?: number;
 }
 
 // This composable encapsulates the business logic for salary calculation.
-// It is a "pure" function, meaning it has no side effects and its output
-// depends only on its input, making it easy to test and reuse.
-
 export function useSalaryCalculator() {
 
   const calculate = (input: SalaryInput): Omit<SalaryCalculation, 'operatorName' | 'calculationDate'> => {
-    const { chiffreAffaireMensuel, autresPrelevements } = input;
+    const {
+      chiffreAffaireMensuel,
+      dette,
+      penalite,
+      remboursement,
+      ecart
+    } = input;
 
     const chiffreAffaireFinal = chiffreAffaireMensuel / 1.10;
     const chiffreAffaireHorsTaxe = chiffreAffaireFinal * 0.06;
 
     const FEL = 2500;
     const AIB = chiffreAffaireHorsTaxe * 0.05;
+
+    const autresPrelevements = (dette || 0) + (penalite || 0) + (remboursement || 0) + (ecart || 0);
     const totalPrelevements = FEL + AIB + autresPrelevements;
 
     const salaireBrut = chiffreAffaireHorsTaxe - totalPrelevements;
@@ -29,7 +37,10 @@ export function useSalaryCalculator() {
       chiffreAffaireHorsTaxe,
       fel: FEL,
       aib: AIB,
-      autresPrelevements,
+      dette: (dette || 0),
+      penalite: (penalite || 0),
+      remboursement: (remboursement || 0),
+      ecart: (ecart || 0),
       totalPrelevements,
       salaireBrut,
     };
