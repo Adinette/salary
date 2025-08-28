@@ -38,7 +38,3 @@ const navItems = [
     </v-main>
   </v-app>
 </template>
-
-<style scoped>
-/* Scoped styles can be added here if needed */
-</style>

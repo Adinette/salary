@@ -6,7 +6,8 @@ const router = createRouter({
     {
       path: '/',
       name: 'dashboard',
-      component: () => import('../views/DashboardView.vue'),
+      // For now, let's point it to the operators view as the main page
+      component: () => import('../views/OperateursView.vue'),
     },
     {
       path: '/operateurs',
@@ -14,8 +15,15 @@ const router = createRouter({
       component: () => import('../views/OperateursView.vue'),
     },
     {
+      path: '/operateur/:id',
+      name: 'operateur-details',
+      component: () => import('../views/OperatorDetailView.vue'),
+      props: true,
+    },
+    {
       path: '/machines',
       name: 'machines',
+      // Placeholder component
       component: () => import('../views/MachinesView.vue'),
     },
   ],
