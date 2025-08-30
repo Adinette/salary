@@ -1,11 +1,13 @@
 <template>
   <v-container fluid>
-    <h1 class="mb-6">Gestion des Opérateurs</h1>
-    <v-card>
-      <v-card-title>
+    <h1 class="mb-6">Listes des Opérateurs</h1>
+    <v-card class="rounded-full">
+      <v-card-title class="">
         Liste des opérateurs
         <v-spacer></v-spacer>
-        <v-btn color="primary" @click="openNewItemDialog">Ajouter un opérateur</v-btn>
+        <div class="d-flex align-center justify-end mb-3">
+                <v-btn color="primary" @click="openNewItemDialog">Ajouter un opérateur</v-btn>
+        </div>
       </v-card-title>
       <v-data-table
         :headers="headers"

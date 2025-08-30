@@ -14,7 +14,7 @@ const navItems = [
 <template>
   <v-app id="inspire">
     <v-navigation-drawer v-model="drawer">
-      <v-list>
+      <v-list class="v-list">
         <v-list-item
           v-for="item in navItems"
           :key="item.title"
@@ -38,3 +38,7 @@ const navItems = [
     </v-main>
   </v-app>
 </template>
+
+<style scoped>
+.v-list {padding: 1.5rem;}
+</style>
